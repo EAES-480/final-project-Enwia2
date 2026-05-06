@@ -1,7 +1,7 @@
 ---
-title: "Presentation title"
-subtitle: "Presentation subtitle (if any)"
-author: "Team name <br> Names of team members"
+title: "Titanite Petrochronology and Geochemistry"
+subtitle: "Porphyry Copper Deposits in Sonora, Mexico"
+author: "Dylan Enwia"
 institute: "University of Illinois at Chicago"
 date: "`r Sys.Date()`"
 output:
@@ -15,164 +15,171 @@ output:
       countIncrementalSlides: false
 ---
 
-```{r load-packages, include = FALSE}
-# Add any additional packages you need to this chunk
+```{r load-packages, include = FALSE, message = FALSE, warning = FALSE}
 library(tidyverse)
-library(tidymodels)
-library(palmerpenguins)
+library(broom)
 library(knitr)
 library(xaringanthemer)
 ```
 
 ```{r setup, include=FALSE}
-# For better figure resolution
-knitr::opts_chunk$set(fig.retina = 3, dpi = 300, fig.width = 6, fig.asp = 0.618, out.width = "80%")
-```
-
-```{r load-data, include=FALSE}
-# Load your data here
-```
-
-```{r}
-style_xaringan(
-  title_slide_background_image = "img/confetti.jpg"
+knitr::opts_chunk$set(
+  fig.retina = 3,
+  dpi = 300,
+  fig.width = 6,
+  fig.asp = 0.618,
+  out.width = "80%",
+  message = FALSE,
+  warning = FALSE
 )
 ```
 
+```{r load-data, include=FALSE}
+Titanite <- read.csv("Titanite.csv")
+
+Titanite$Sample_ID <- factor(
+  Titanite$Sample_ID,
+  levels = c("25CU01", "25SV1-1", "25CV02", "25LC2", "25LV1")
+)
+
+Titanite <- Titanite %>%
+  filter(!is.na(Sample_ID))
+
+model1 <- lm(Temperature_C ~ Age_Ma, data = Titanite)
+model2 <- lm(Eu_Anomaly ~ Age_Ma, data = Titanite)
+model3 <- lm(Ce_Anomaly ~ Age_Ma, data = Titanite)
+```
+
+```{r style, include=FALSE}
+style_xaringan(
+  title_slide_background_color = "#1f2933",
+  title_slide_text_color = "white",
+  header_color = "#0f172a",
+  text_color = "#1f2933",
+  link_color = "#2563eb"
+)
+```
 
 class: center, middle
 
-## A statement of the overall goal / research question
+## Research Question
+
+How does titanite age relate to crystallization temperature and REE anomalies in my Sonora titanite samples?
 
 ---
 
-class: inverse, center, middle
+# Why Titanite?
 
-# Section title
+Titanite is useful because it can record both age and geochemical information from igneous and hydrothermal systems.
 
----
-
-# Hello World
-
-- Click the `Knit` button to compile your presentation
-
-- Make sure to commit and push all resulting files to your GitHub repo
+- U-Pb dating gives titanite crystallization age
+- Zr-in-titanite gives temperature estimates
+- Eu and Ce anomalies can reflect magma evolution and redox conditions
+- These patterns may help evaluate magmatic fertility in porphyry copper systems
 
 ---
 
-class: inverse, middle, center
-
-# Using xaringan
-
----
-
-# xaringan
-
-- The presentation is created using the `xaringan` package
-
-- Use `---` to separate slides and `--` for incremental builds
-
---
-
-- Like this
-
----
-
-# Layouts
-
-You can use plain text
-
-- or bullet points
+# Data & Variables
+The dataset includes titanite analyses from five samples:
 
 .pull-left[
-or text in two columns $^*$
+- Cuitaca (25CU01)
+- Cerro Verde (25CV02)
+- Cerro Saupchi (25LC2)
+- Puerto La Valdeza (25LV1)
+- Suaqui Verde (25SV1-1)
 ]
 .pull-right[
-- like
-- this
-]
+Response variables:
 
-.footnote[
-[*] And add footnotes
-]
+- `Temperature_C`
+- `Eu_Anomaly`
+- `Ce_Anomaly`
 
----
+Predictor variable:
 
-# Code
-
-```{r boring-regression}
-# a boring regression
-model <- lm(dist ~ speed, data = cars)
-tidy(model)
-glance(model)
-```
-
----
-
-# Plots
-
-```{r recode-species, echo = FALSE}
-# In this chunk I'm doing a bunch of analysis that I don't want to present 
-# in my slides. But I need the resulting data frame for a plot I want to present.
-iris_modified <- iris %>%
-  mutate(Species = fct_other(Species, keep = "setosa"))
-```
-
-```{r plot-iris, echo = FALSE}
-# Code hidden with echo = FALSE
-# Uses modified iris dataset from previous chunk
-# Play around with height and width until you're happy with the look
-ggplot(data = iris_modified, mapping = aes(x = Sepal.Width, y = Sepal.Length, color = Species)) +
-  geom_point() + 
-  theme_minimal() # theme options: https://ggplot2.tidyverse.org/reference/ggtheme.html
-```
-
----
-
-## Plot and text
-
-.pull-left[
-- Some text
-- goes here
-]
-.pull-right[
-```{r warning=FALSE, out.width="100%", fig.width=4, echo=FALSE}
-# see how I changed out.width and fig.width from defaults
-# to make the figure bigger
-ggplot(penguins, aes(x = bill_length_mm, y = species, color = species)) +
-  geom_boxplot() +
-  theme_minimal()
-```
+- `Age_Ma`
 ]
 
 ---
+# Age vs. Temperature 
+class: center, middle
+```{r age-temperature, echo=FALSE}
+ggplot(Titanite, aes(x = Age_Ma, y = Temperature_C, color = Sample_ID)) +
+  geom_point(size = 3) +
+  theme_minimal() + 
+  labs(
+    title = "Titanite Age vs. Zr-in-Titanite Temperature",
+    x = "Titanite U-Pb Age (Ma)",
+    y = "Zr-in-Titanite Temperature (°C)",
+    color = "Sample ID"
+  ) +
+  theme(plot.title = element_text(hjust = 0.5))
+```
 
-# Tables
+---
+# Age vs. Eu Anomaly
+class: center, middle
+```{r age-eu-anomaly, echo=FALSE}
+ggplot(Titanite, aes(x = Age_Ma, y = Eu_Anomaly, color = Sample_ID)) +
+  geom_point(size = 2.5) +
+  theme_minimal() +
+  labs(
+    title = "Age vs. Eu/Eu*",
+    x = "Age (Ma)",
+    y = "Eu/Eu*",
+    color = "Sample"
+  ) +
+  theme(plot.title = element_text(hjust = 0.5))
+```
 
-If you want to generate a table, make sure it is in the HTML format (instead of Markdown or other formats), e.g.,
-
-```{r iris-table, echo = FALSE}
-kable(head(iris), format = "html")
+---
+# Age vs. Ce Anomaly
+class: center, middle
+```{r age-ce-anomaly, echo=FALSE}
+ggplot(Titanite, aes(x = Age_Ma, y = Ce_Anomaly, color = Sample_ID)) +
+  geom_point(size = 2.5) +
+  theme_minimal() +
+  labs(
+    title = "Age vs. Ce Anomaly",
+    x = "Age (Ma)",
+    y = "Ce Anomaly",
+    color = "Sample"
+  ) +
+  theme(plot.title = element_text(hjust = 0.5))
 ```
 
 ---
 
-# Images
+# Linear Regression Results
 
-```{r castle, echo = FALSE, out.width = "60%", fig.align = "center", fig.cap = "Image credit: Photo by Enjoy Illinois."}
-include_graphics("img/chicago-fall.jpeg")
+```{r regression-results, echo=FALSE}
+bind_rows(
+  Temperature = glance(model1),
+  Eu_Anomaly = glance(model2),
+  Ce_Anomaly = glance(model3),
+  .id = "Response"
+) %>%
+  select(Response, r.squared, adj.r.squared, p.value) %>%
+  kable(format = "html", digits = 4)
 ```
 
+These models test whether titanite age predicts each response variable.
 
 ---
 
-# Feeling adventurous?
+# Conclusions
 
-- Want to find out more about `xaringan`? See https://slides.yihui.name/xaringan/#1.
+- Titanite provides both age and geochemical information.
+- Age can be tested as a predictor of temperature, Eu/Eu*, and Ce anomaly.
+- Eu/Eu* may reflect magma evolution, plagioclase effects, or redox conditions.
+- Ce anomaly may relate to oxidation state, which is important for porphyry copper fertility.
+- These results help connect titanite geochemistry to the larger question of magmatic fertility in Sonora.
 
-- You are welcomed to use the default styling of the slides. In fact, that's what I expect majority of you will do. You will differentiate yourself with the content of your presentation.
+---
 
-- But some of you might want to play around with slide styling. The 
-`xaringanthemer` provides some solutions for this that: https://pkg.garrickadenbuie.com/xaringanthemer.
+class: center, middle
 
-- And if you want more bells and whistles, there is also `xaringanExtra`: https://pkg.garrickadenbuie.com/xaringanExtra.
+# Thank you
+
+<span style="font-size: 52px; font-weight: ">Questions?</span>
