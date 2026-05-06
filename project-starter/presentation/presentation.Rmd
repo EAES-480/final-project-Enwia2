@@ -98,7 +98,7 @@ The dataset includes 279 titanite analyses from five Sonora samples:
 .pull-left[
 ## Samples
 
-- Cuitaca (25CU010
+- Cuitaca (25CU01)
 - Cerro Verde (25CV02)
 - Cerro Saupchi (25LC2)
 - Puerto La Valdeza (25LV1)
