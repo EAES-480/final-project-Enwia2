@@ -60,11 +60,12 @@ style_xaringan(
 )
 ```
 
+
 class: center, middle
 
 ## Research Question
 
-How does titanite age relate to crystallization temperature and REE anomalies in my Sonora titanite samples?
+How does titanite age relate to crystallization temperature and REE anomalies?
 
 ---
 
@@ -72,41 +73,78 @@ How does titanite age relate to crystallization temperature and REE anomalies in
 
 Titanite is useful because it can record both age and geochemical information from igneous and hydrothermal systems.
 
+.pull-left[
+## Petrochronology
+
 - U-Pb dating gives titanite crystallization age
+- Age helps separate different magmatic events
+- Useful for comparing older vs. younger titanite populations
+]
+
+.pull-right[
+## Geochemistry
+
 - Zr-in-titanite gives temperature estimates
-- Eu and Ce anomalies can reflect magma evolution and redox conditions
-- These patterns may help evaluate magmatic fertility in porphyry copper systems
+- Eu anomaly tracks magma evolution
+- Ce anomaly reflects oxidation state
+]
 
 ---
 
 # Data & Variables
-The dataset includes titanite analyses from five samples:
+
+The dataset includes 279 titanite analyses from five Sonora samples:
 
 .pull-left[
-- Cuitaca (25CU01)
+## Samples
+
+- Cuitaca (25CU010
 - Cerro Verde (25CV02)
 - Cerro Saupchi (25LC2)
 - Puerto La Valdeza (25LV1)
 - Suaqui Verde (25SV1-1)
 ]
+
 .pull-right[
-Response variables:
+## Variables
+
+**Predictor variable**
+
+- `Age_Ma`
+
+**Response variables**
 
 - `Temperature_C`
 - `Eu_Anomaly`
 - `Ce_Anomaly`
-
-Predictor variable:
-
-- `Age_Ma`
 ]
 
 ---
-# Age vs. Temperature 
-class: center, middle
-```{r age-temperature, echo=FALSE}
+
+# Summary of Dataset
+
+```{r summary-table, echo=FALSE}
+Titanite %>%
+  group_by(Sample_ID) %>%
+  summarize(
+    Count = n(),
+    Mean_Age = mean(Age_Ma, na.rm = TRUE),
+    Mean_Temp = mean(Temperature_C, na.rm = TRUE),
+    Mean_Eu = mean(Eu_Anomaly, na.rm = TRUE),
+    Mean_Ce = mean(Ce_Anomaly, na.rm = TRUE)
+  ) %>%
+  kable(format = "html", digits = 2)
+```
+
+---
+
+# Age vs. Temperature Plot
+
+.center[
+```{r age-temperature, echo=FALSE, fig.width=6, out.width="75%"}
 ggplot(Titanite, aes(x = Age_Ma, y = Temperature_C, color = Sample_ID)) +
   geom_point(size = 3) +
+  geom_smooth(method = "lm", se = TRUE) +
   theme_minimal() + 
   labs(
     title = "Titanite Age vs. Zr-in-Titanite Temperature",
@@ -114,59 +152,103 @@ ggplot(Titanite, aes(x = Age_Ma, y = Temperature_C, color = Sample_ID)) +
     y = "Zr-in-Titanite Temperature (°C)",
     color = "Sample ID"
   ) +
-  theme(plot.title = element_text(hjust = 0.5))
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    legend.position = "bottom"
+  )
 ```
+]
 
 ---
-# Age vs. Eu Anomaly
-class: center, middle
-```{r age-eu-anomaly, echo=FALSE}
+
+# Age vs. Eu Anomaly Plot
+
+.center[
+```{r age-eu-anomaly, echo=FALSE, fig.width=6, out.width="75%"}
 ggplot(Titanite, aes(x = Age_Ma, y = Eu_Anomaly, color = Sample_ID)) +
-  geom_point(size = 2.5) +
+  geom_point(size = 3) +
+  geom_smooth(method = "lm", se = TRUE) +
   theme_minimal() +
   labs(
-    title = "Age vs. Eu/Eu*",
-    x = "Age (Ma)",
+    title = "Titanite Age vs. Eu/Eu*",
+    x = "Titanite U-Pb Age (Ma)",
     y = "Eu/Eu*",
-    color = "Sample"
+    color = "Sample ID"
   ) +
-  theme(plot.title = element_text(hjust = 0.5))
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    legend.position = "bottom"
+  )
 ```
+]
 
 ---
+
 # Age vs. Ce Anomaly
-class: center, middle
-```{r age-ce-anomaly, echo=FALSE}
+
+.center[
+```{r age-ce-anomaly, echo=FALSE, fig.width=6, out.width="75%"}
 ggplot(Titanite, aes(x = Age_Ma, y = Ce_Anomaly, color = Sample_ID)) +
-  geom_point(size = 2.5) +
+  geom_point(size = 3) +
+  geom_smooth(method = "lm", se = TRUE) +
   theme_minimal() +
   labs(
-    title = "Age vs. Ce Anomaly",
-    x = "Age (Ma)",
+    title = "Titanite Age vs. Ce Anomaly",
+    x = "Titanite U-Pb Age (Ma)",
     y = "Ce Anomaly",
-    color = "Sample"
+    color = "Sample ID"
   ) +
-  theme(plot.title = element_text(hjust = 0.5))
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    legend.position = "bottom"
+  )
 ```
+]
 
 ---
 
 # Linear Regression Results
 
 ```{r regression-results, echo=FALSE}
-bind_rows(
+model_ci <- bind_rows(
+  Temperature = tidy(model1, conf.int = TRUE, conf.level = 0.95),
+  Eu_Anomaly = tidy(model2, conf.int = TRUE, conf.level = 0.95),
+  Ce_Anomaly = tidy(model3, conf.int = TRUE, conf.level = 0.95),
+  .id = "Response"
+) %>%
+  filter(term == "Age_Ma") %>%
+  select(Response, estimate, conf.low, conf.high, p.value)
+
+model_fit <- bind_rows(
   Temperature = glance(model1),
   Eu_Anomaly = glance(model2),
   Ce_Anomaly = glance(model3),
   .id = "Response"
 ) %>%
-  select(Response, r.squared, adj.r.squared, p.value) %>%
-  kable(format = "html", digits = 4)
+  select(Response, r.squared, adj.r.squared)
+
+model_ci %>%
+  left_join(model_fit, by = "Response") %>%
+  select(Response, estimate, conf.low, conf.high, r.squared, adj.r.squared, p.value) %>%
+  kable(
+    format = "html",
+    digits = 4,
+    col.names = c(
+      "Response",
+      "Slope Estimate",
+      "95% CI Lower",
+      "95% CI Upper",
+      "R²",
+      "Adjusted R²",
+      "p-value"
+    )
+  )
 ```
 
-These models test whether titanite age predicts each response variable.
+- These models test whether titanite age predicts each response variable.
 
 ---
+
 
 # Conclusions
 
@@ -180,6 +262,6 @@ These models test whether titanite age predicts each response variable.
 
 class: center, middle
 
-# Thank you
+#Thank you
 
-<span style="font-size: 52px; font-weight: ">Questions?</span>
+<span style="font-size: 60px; font-weight: bold;">Questions?</span>
