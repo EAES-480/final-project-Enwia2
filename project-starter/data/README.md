@@ -25,3 +25,5 @@ Question 2: Is titanite U–Pb age related to the Eu Anomaly & Ce Anomaly? Tests
 Methods: I will use the figures above plus linear regression models. I made some scatter plots above of titanite U–Pb age versus each variable (Zr-in-titanite temperature, Eu anomaly, and Ce anomaly) to visually assess trends and relationships in the data. Next, I'm going to use linear regression models to quantify the relationships between age and each predictor variable. I'm planning to evaulate R^2 and p-value.
 
 
+# Summary 
+
